@@ -49,7 +49,7 @@ data:
     server {
       listen 80;
 
-      set $proxy_header_host $host;
+      set_real_ip_from 0.0.0.0/0;
 
       location / {
                 try_files /dev/null $is_agent;
@@ -59,12 +59,14 @@ data:
         proxy_pass http://$backend_cookie;
         proxy_next_upstream error timeout http_503 non_idempotent;
         proxy_intercept_errors on;
+        proxy_pass_request_body on;
         proxy_set_header Host $host:$server_port;
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy "type=nginx; version={{ $.Chart.AppVersion }}";
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-For $remote_addr;
+        # Use value from Ingress Nginx
+        # proxy_set_header X-Forwarded-Proto $scheme;
+        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
@@ -73,12 +75,14 @@ data:
         proxy_pass http://web_requests;
         proxy_next_upstream error timeout http_503 non_idempotent;
         proxy_intercept_errors on;
+        proxy_pass_request_body on;
         proxy_set_header Host $host:$server_port;
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy "type=nginx; version={{ $.Chart.AppVersion }}";
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-For $remote_addr;
+        # Use value from Ingress Nginx
+        # proxy_set_header X-Forwarded-Proto $scheme;
+        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
