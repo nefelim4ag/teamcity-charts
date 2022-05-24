@@ -9,7 +9,7 @@ data:
     upstream {{ $value_out.env.NODE_ID }} {
       {{- range $key_in, $value_in := $.Values.teamcity }}
       {{- if eq $value_out.env.NODE_ID $value_in.env.NODE_ID }}
-      server {{ $.Release.Name }}-{{ $key_in }}:8111 max_fails=0;
+      server {{ $.Release.Name }}-{{ $key_in }}:8111 max_fails=1;
       {{- else }}
       server {{ $.Release.Name }}-{{ $key_in }}:8111 backup;
       {{- end }}
@@ -20,7 +20,7 @@ data:
     upstream web_requests {
       {{- range $key, $value := $.Values.teamcity }}
       {{- if eq $value.env.NODE_ID $.Values.proxy.main_node_id }}
-      server {{ $.Release.Name }}-{{ $key }}:8111 max_fails=0;
+      server {{ $.Release.Name }}-{{ $key }}:8111 max_fails=1;
       {{- else }}
       server {{ $.Release.Name }}-{{ $key }}:8111 backup;
       {{- end }}
