@@ -56,6 +56,14 @@ spec:
           name: {{ $.Release.Name }}-opt-conf
           subPath: {{ $key }}
         {{- end }}
+{{- with $.Values.ephemeral }}
+{{- range $volume, $v_values := . }}
+{{- if $v_values.enabled }}
+        - mountPath: /opt/teamcity/{{ $volume }}
+          name: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
+{{- end }}
+{{- end }}
+{{- end }}
         - mountPath: /data/teamcity_server/datadir
           name: teamcity-server-data
         - mountPath: /var/cache
@@ -80,6 +88,15 @@ spec:
         name: cache-volume
       - emptyDir: {}
         name: home
+{{- with $.Values.ephemeral }}
+{{- range $volume, $v_values := . }}
+{{- if $v_values.enabled }}
+      - name: teamcity-server-{{ $volume }}
+        persistentVolumeClaim:
+          claimName: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
+{{- end }}
+{{- end }}
+{{- end }}
       affinity: {{ $value.affinity | toJson }}
       imagePullSecrets: {{ $.Values.image.imagePullSecrets | toJson }}
       {{- with $value.topologySpreadConstraints }}

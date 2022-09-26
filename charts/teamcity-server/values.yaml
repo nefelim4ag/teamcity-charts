@@ -129,6 +129,27 @@ pvc:
     requests:
       storage: 16Gi
 
+# Create & Mount PVC for /opt/teamcity directories
+ephemeral:
+  temp:
+    enabled: false
+    annotations: {}
+    storageClassName: efs
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 16Gi
+  logs:
+    enabled: false
+    annotations: {}
+    storageClassName: efs
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 16Gi
+
 database:
   host: "127.0.0.1"
   name: "teamcity"
