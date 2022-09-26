@@ -66,8 +66,13 @@ spec:
 {{- end }}
         - mountPath: /data/teamcity_server/datadir
           name: teamcity-server-data
-        - mountPath: /var/cache
+{{- if $.Values.ephemeral.cache.enabled }}
+        - mountPath: /var/cache/teamcity
+          name: {{ $.Release.Name }}-{{ $key }}-cache
+{{- else }}
+        - mountPath: /var/cache/teamcity
           name: cache-volume
+{{- end }}
         - mountPath: /home/tcuser
           name: home
       volumes:
@@ -84,14 +89,16 @@ spec:
       - name: teamcity-server-data
         persistentVolumeClaim:
           claimName: {{ $.Values.pvc.name }}
+{{- if not $.Values.ephemeral.cache.enabled }}
       - emptyDir: {}
         name: cache-volume
+{{- end }}
       - emptyDir: {}
         name: home
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
 {{- if $v_values.enabled }}
-      - name: teamcity-server-{{ $volume }}
+      - name: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
         persistentVolumeClaim:
           claimName: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
 {{- end }}

@@ -149,6 +149,15 @@ ephemeral:
     resources:
       requests:
         storage: 16Gi
+  cache:
+    enabled: false
+    annotations: {}
+    storageClassName: efs
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 16Gi
 
 database:
   host: "127.0.0.1"
