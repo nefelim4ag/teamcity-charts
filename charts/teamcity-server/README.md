@@ -3,7 +3,7 @@
 # TL;DR
 ```
 helm repo add teamcity-charts https://nefelim4ag.github.io/teamcity-charts/
-helm install teamcity teamcity-server/teamcity-charts
+helm install teamcity teamcity-charts/teamcity-server
 ```
 
 # Description
