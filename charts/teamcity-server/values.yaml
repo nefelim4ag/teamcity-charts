@@ -11,108 +11,88 @@ proxy:
     tag: stable
     pullPolicy: IfNotPresent
     imagePullSecrets: []
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "12Mi"
+  startupProbe: ~
+  ## Free Nginx does not update DNS endpoints
+  ## Proxy must be rewritten to envoy in the future
+  ## Fix that by reload duct tape
+  livenessProbe:
+    exec:
+      command:
+        - /usr/sbin/nginx
+        - -s
+        - reload
+    initialDelaySeconds: 60
+    periodSeconds: 60
   ingress:
     hosts:
       - teamcity.example.com
       - teamcity.isolated.example.com
-    annotations:
-      kubernetes.io/ingress.class: "nginx"
-      cert-manager.io/cluster-issuer: letsencrypt
+    ingressClassName: nginx
+    annotations: ~
+      # cert-manager.io/cluster-issuer: letsencrypt
       # Nginx specific annotations
-      nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
-      nginx.ingress.kubernetes.io/proxy-body-size: 400M
-      nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+      # nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
+      # nginx.ingress.kubernetes.io/proxy-body-size: 400M
+      # nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
+      # nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+      # nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
   main_node_id: MAIN_SERVER # Must match with below for default route
 
+## Teamcity deployed by StateFulSet
+## @param teamcity.resources default value for all nodes in sts
 teamcity:
-  server:
-    replicas: 1
-    env:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 2048Mi
+  ## @param teamcity.env default values for all nodes in sts
+  env:
+    TEAMCITY_SERVER_MEM_OPTS: -Xms512m -Xmx2048m
+    POD_NAME:
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+  startupProbe:
+    httpGet:
+      path: /login.html
+      port: http
+      scheme: HTTP
+    failureThreshold: 120
+    periodSeconds: 5
+  ports:
+  - containerPort: 8111
+    name: http
+    protocol: TCP
+  affinity: {}
+  tolerations:
+    - key: "{{ $.Release.Name }}"
+      operator: Exists
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: "{{ $.Release.Name }}"
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: "{{ $.Release.Name }}"
+  ## @param teamcity.nodes[<index>] override per <index> of sts node
+  nodes:
+  - env:
       NODE_ID: MAIN_SERVER # Used to generate Nginx configuration
       ROOT_URL: https://teamcity-main.example.com
-      TEAMCITY_SERVER_MEM_OPTS: -Xms512m -Xmx2048m
-      TEAMCITY_SERVER_OPTS: >
-        -Dteamcity.server.nodeId=${NODE_ID}
-        -Dteamcity.server.rootURL=${ROOT_URL}
-        -Dteamcity.caches.path=/var/cache/teamcity
-    resources:
-      requests:
-        cpu: 100m
-        memory: 2048Mi
-    ingress:
-      hosts:
-        - teamcity-main.example.com
-      annotations:
-        kubernetes.io/ingress.class: "nginx"
-        cert-manager.io/cluster-issuer: letsencrypt
-        # Nginx specific annotations
-        nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
-        nginx.ingress.kubernetes.io/proxy-body-size: 400M
-        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
-        nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
-    affinity: {}
-    tolerations:
-      - key: "{{ $.Release.Name }}"
-        operator: Exists
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: "{{ $.Release.Name }}"
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: "{{ $.Release.Name }}"
-  secondary:
-    replicas: 1
-    env:
+  - env:
       NODE_ID: teamcity-secondary
       ROOT_URL: https://teamcity-secondary.example.com
-      TEAMCITY_SERVER_MEM_OPTS: -Xms512m -Xmx2048m
-      TEAMCITY_SERVER_OPTS: >
-        -Dteamcity.server.nodeId=${NODE_ID}
-        -Dteamcity.caches.path=/var/cache/teamcity
-        -Dteamcity.server.rootURL=${ROOT_URL}
-    resources:
-      requests:
-        cpu: 100m
-        memory: 2048Mi
-    ingress:
-      hosts:
-        - teamcity-secondary.example.com
-      annotations:
-        kubernetes.io/ingress.class: "nginx"
-        cert-manager.io/cluster-issuer: letsencrypt
-        # Nginx specific annotations
-        nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
-        nginx.ingress.kubernetes.io/proxy-body-size: 400M
-        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
-        nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
-    affinity: {}
-    tolerations:
-      - key: "{{ $.Release.Name }}"
-        operator: Exists
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: "{{ $.Release.Name }}"
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: "{{ $.Release.Name }}"
+
 
 pdb:
   enabled: true
@@ -129,7 +109,9 @@ pvc:
     requests:
       storage: 16Gi
 
-# Create & Mount PVC for /opt/teamcity directories
+## Create & Mount PVC for /opt/teamcity directories
+## Defaults to emptyDir
+## Generated by STS PVC Template - volume per node
 ephemeral:
   temp:
     enabled: false
@@ -194,7 +176,7 @@ configMap:
       maxConnections=50
   optConf:
     server.xml: |-
-      <?xml version='1.0' encoding='utf-8'?>
+      <?xml version="1.0" encoding="UTF-8"?>
       <Server port="8105" shutdown="SHUTDOWN">
         <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
         <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
@@ -203,36 +185,17 @@ configMap:
         <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
         <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
         <GlobalNamingResources>
-          <Resource name="UserDatabase" auth="Container"
-                    type="org.apache.catalina.UserDatabase"
-                    description="User database that can be updated and saved"
-                    factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
-                    pathname="conf/tomcat-users.xml" />
+          <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database that can be updated and saved" factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml" />
         </GlobalNamingResources>
         <Service name="Catalina">
-          <Connector port="8111" protocol="org.apache.coyote.http11.Http11NioProtocol"
-                    connectionTimeout="60000"
-                    redirectPort="8543"
-                    useBodyEncodingForURI="true"
-                    tcpNoDelay="1"
-          />
+          <Connector port="8111" protocol="org.apache.coyote.http11.Http11NioProtocol" connectionTimeout="60000" redirectPort="8543" useBodyEncodingForURI="true" tcpNoDelay="1" />
           <Engine name="Catalina" defaultHost="localhost">
             <Realm className="org.apache.catalina.realm.LockOutRealm">
-              <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
-                    resourceName="UserDatabase"/>
+              <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase" />
             </Realm>
-
-            <Host name="localhost"  appBase="webapps"
-                  unpackWARs="true" autoDeploy="true">
-              <Valve className="org.apache.catalina.valves.ErrorReportValve"
-                    showReport="false"
-                    showServerInfo="false" />
-            <Valve
-                className="org.apache.catalina.valves.RemoteIpValve"
-                remoteIpHeader="x-forwarded-for"
-                protocolHeader="x-forwarded-proto"
-                portHeader="x-forwarded-port"
-                />
+            <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
+              <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false" />
+              <Valve className="org.apache.catalina.valves.RemoteIpValve" remoteIpHeader="x-forwarded-for" protocolHeader="x-forwarded-proto" portHeader="x-forwarded-port" />
             </Host>
           </Engine>
         </Service>

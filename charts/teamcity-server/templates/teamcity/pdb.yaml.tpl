@@ -10,5 +10,6 @@ spec:
   selector:
     matchLabels:
       app: {{ $.Release.Name }}
+      component: server
   minAvailable: {{ .Values.pdb.minAvailable }}
 {{- end }}

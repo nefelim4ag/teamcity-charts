@@ -1,9 +1,8 @@
-{{- range $key, $value := .Values.teamcity }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $.Release.Name }}-{{ $key }}
+  name: {{ $.Release.Name }}
 spec:
   ports:
     - name: http
@@ -12,16 +11,17 @@ spec:
       targetPort: http
   selector:
     app: {{ $.Release.Name }}
-    component: {{ $key }}
+    component: server
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $.Release.Name }}-{{ $key }}-headless
+  name: {{ $.Release.Name }}-headless
 spec:
   type: ClusterIP
   clusterIP: None
+  publishNotReadyAddresses: true
   ports:
     - name: http
       protocol: TCP
@@ -29,5 +29,4 @@ spec:
       targetPort: http
   selector:
     app: {{ $.Release.Name }}
-    component: {{ $key }}
-{{- end }}
+    component: server

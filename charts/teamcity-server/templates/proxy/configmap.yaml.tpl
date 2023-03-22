@@ -5,24 +5,24 @@ metadata:
   name: {{ $.Release.Name }}-nginx-conf
 data:
   default.conf: |
-    {{- range $key_out, $value_out := $.Values.teamcity }}
+    {{- range $key_out, $value_out := $.Values.teamcity.nodes }}
     upstream {{ $value_out.env.NODE_ID }} {
-      {{- range $key_in, $value_in := $.Values.teamcity }}
+      {{- range $key_in, $value_in := $.Values.teamcity.nodes }}
       {{- if eq $value_out.env.NODE_ID $value_in.env.NODE_ID }}
-      server {{ $.Release.Name }}-{{ $key_in }}:8111 max_fails=1;
+      server {{ $.Release.Name }}-{{ $key_in }}.{{ $.Release.Name }}-headless:8111 max_fails=1;
       {{- else }}
-      server {{ $.Release.Name }}-{{ $key_in }}:8111 backup;
+      server {{ $.Release.Name }}-{{ $key_in }}.{{ $.Release.Name }}-headless:8111 backup;
       {{- end }}
       {{- end }}
     }
     {{- end }}
 
     upstream web_requests {
-      {{- range $key, $value := $.Values.teamcity }}
+      {{- range $key, $value := $.Values.teamcity.nodes }}
       {{- if eq $value.env.NODE_ID $.Values.proxy.main_node_id }}
-      server {{ $.Release.Name }}-{{ $key }}:8111 max_fails=1;
+      server {{ $.Release.Name }}-{{ $key }}.{{ $.Release.Name }}-headless:8111 max_fails=1;
       {{- else }}
-      server {{ $.Release.Name }}-{{ $key }}:8111 backup;
+      server {{ $.Release.Name }}-{{ $key }}.{{ $.Release.Name }}-headless:8111 backup;
       {{- end }}
       {{- end }}
     }
@@ -52,7 +52,7 @@ data:
       set_real_ip_from 0.0.0.0/0;
 
       location / {
-                try_files /dev/null $is_agent;
+        try_files /dev/null $is_agent;
       }
 
       location @agents {

@@ -12,8 +12,8 @@ spec:
   template:
     metadata:
       annotations:
-    {{- range $key, $value := $.Values.teamcity }}
-        {{ $key }}: {{ $value.env.NODE_ID }}
+    {{- range $key, $value := $.Values.teamcity.nodes }}
+        {{ $.Release.Name }}-{{ $key }}: {{ $value.env.NODE_ID }}
     {{- end }}
       labels:
         app: {{ $.Release.Name }}-proxy
@@ -30,14 +30,12 @@ spec:
                 - sh
                 - -c
                 - sleep 10; exec /usr/sbin/nginx -s quit
-        startupProbe: {{ .startupProbe | toJson }}
+        startupProbe: {{ $.Values.proxy.startupProbe | toJson }}
+        livenessProbe: {{ $.Values.proxy.livenessProbe | toJson }}
         ports:
         - name: http
           containerPort: 80
-        resources:
-          requests:
-            cpu: "10m"
-            memory: "12Mi"
+        resources: {{ $.Values.proxy.resources | toJson }}
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/conf.d/default.conf

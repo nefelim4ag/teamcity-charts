@@ -1,29 +1,32 @@
-{{- range $key, $value := .Values.teamcity }}
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ $.Release.Name }}-{{ $key }}
+  name: {{ $.Release.Name }}
 spec:
-  replicas: {{ $value.replicas}}
+  replicas: {{ len $.Values.teamcity.nodes }}
+  serviceName: {{ $.Release.Name }}-headless
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: {{ $.Release.Name }}
-      component: {{ $key }}
-  strategy:
-    type: Recreate
+      component: server
   template:
     metadata:
       labels:
         app: {{ $.Release.Name }}
-        component: {{ $key }}
+        component: server
     spec:
       containers:
-      - name: {{ $.Release.Name }}-{{ $key }}
+      - name: {{ $.Release.Name }}
         image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
         imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        command:
+        - /run-services-wrp.sh
         env:
-        {{- with $value.env }}
+        {{- with $.Values.teamcity.env }}
         {{- range $key, $value := . }}
         - name: {{ $key }}
         {{- if kindIs "string" $value }}
@@ -33,19 +36,12 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
-        startupProbe:
-          httpGet:
-            path: /login.html
-            port: 8111
-            scheme: HTTP
-          failureThreshold: 120
-          periodSeconds: 5
-        ports:
-        - containerPort: 8111
-          name: http
-          protocol: TCP
-        resources: {{ $value.resources | toJson }}
+        startupProbe: {{ $.Values.teamcity.startupProbe | toJson }}
+        ports: {{ $.Values.teamcity.ports | toJson}}
+        resources: {{ $.Values.teamcity.resources | toJson }}
         volumeMounts:
+        - mountPath: /data/teamcity_server/datadir
+          name: teamcity-server-data
         {{- range $key, $value := $.Values.configMap.datadirConfig }}
         - name: {{ $.Release.Name }}-datadir-config
           mountPath: /data/teamcity_server/datadir/config/{{ $key }}
@@ -56,66 +52,72 @@ spec:
           name: {{ $.Release.Name }}-opt-conf
           subPath: {{ $key }}
         {{- end }}
+        - mountPath: /run-services-wrp.sh
+          name: {{ $.Release.Name }}-startup-wrp
+          subPath: run-services-wrp.sh
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
-{{- if $v_values.enabled }}
         - mountPath: /opt/teamcity/{{ $volume }}
-          name: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
+          name: {{ $volume }}
 {{- end }}
-{{- end }}
-{{- end }}
-        - mountPath: /data/teamcity_server/datadir
-          name: teamcity-server-data
-{{- if $.Values.ephemeral.cache.enabled }}
-        - mountPath: /var/cache/teamcity
-          name: {{ $.Release.Name }}-{{ $key }}-cache
-{{- else }}
-        - mountPath: /var/cache/teamcity
-          name: cache-volume
 {{- end }}
         - mountPath: /home/tcuser
-          name: home
+          name: home-tcuser
       volumes:
       - name: {{ $.Release.Name }}-opt-conf
         configMap:
-          defaultMode: 420
+          defaultMode: 0644
           name: {{ $.Release.Name }}-opt-conf
           optional: false
       - name: {{ $.Release.Name }}-datadir-config
         configMap:
-          defaultMode: 420
+          defaultMode: 0644
           name: {{ $.Release.Name }}-datadir-config
+          optional: false
+      - name: {{ $.Release.Name }}-startup-wrp
+        configMap:
+          defaultMode: 0755
+          name: {{ $.Release.Name }}-startup-wrp
           optional: false
       - name: teamcity-server-data
         persistentVolumeClaim:
           claimName: {{ $.Values.pvc.name }}
-{{- if not $.Values.ephemeral.cache.enabled }}
-      - emptyDir: {}
-        name: cache-volume
-{{- end }}
-      - emptyDir: {}
-        name: home
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
-{{- if $v_values.enabled }}
-      - name: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
-        persistentVolumeClaim:
-          claimName: {{ $.Release.Name }}-{{ $key }}-{{ $volume }}
+{{- if not $v_values.enabled }}
+      - emptyDir: {}
+        name: {{ $volume }}
 {{- end }}
 {{- end }}
 {{- end }}
-      affinity: {{ $value.affinity | toJson }}
+      - emptyDir: {}
+        name: home-tcuser
       imagePullSecrets: {{ $.Values.image.imagePullSecrets | toJson }}
-      {{- with $value.topologySpreadConstraints }}
+      affinity: {{ $.Values.teamcity.affinity | toJson }}
+      {{- with $.Values.teamcity.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with $value.affinity }}
+      {{- with $.Values.teamcity.affinity }}
       affinity:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      {{- with $value.tolerations }}
+      {{- with $.Values.teamcity.tolerations }}
       tolerations:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
+  volumeClaimTemplates:
+{{- with $.Values.ephemeral }}
+{{- range $volume, $v_values := . }}
+{{- if $v_values.enabled }}
+  - metadata:
+      name: {{ $volume }}
+      annotations: {{ $v_values.annotations | toJson }}
+    spec:
+      storageClassName: {{ $v_values.storageClassName }}
+      accessModes: {{ $v_values.accessModes | toJson }}
+      resources: {{ $v_values.resources | toJson }}
+      volumeMode: Filesystem
+{{- end }}
+{{- end }}
 {{- end }}
