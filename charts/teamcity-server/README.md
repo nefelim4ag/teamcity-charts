@@ -10,11 +10,10 @@ helm install teamcity teamcity-charts/teamcity-server
 
 * Migrated to statefulset
 * Make PDB working
-* Per node env moved to `teamcity.nodes[]`
+* Per node env & ingress moved to `teamcity.nodes[]`
 * Per node env override works by entrypoint wrapper
-* Dropped per node ingress. No easy implementation with STS.
 * Dropped custom teamcity cache path from args
-* Hide defaults for TEAMCITY_SERVER_OPTS because of: https://github.com/helm/helm/issues/5568
+* Hide defaults for TEAMCITY_SERVER_OPTS because of: https://github.com/helm/helm/issues/5568. You still can set it to arbitrary value, it will be concatenated.
 
 # Description
 

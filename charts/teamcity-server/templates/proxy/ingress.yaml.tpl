@@ -13,6 +13,13 @@ spec:
     {{- range $key := $.Values.proxy.ingress.hosts }}
     - {{ tpl $key $ }}
     {{- end }}
+    {{- range $index, $value := $.Values.teamcity.nodes }}
+    {{- with $value.ingress }}
+    {{- if .host }}
+    - {{ tpl .host $ }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
   rules:
   {{- range $key := $.Values.proxy.ingress.hosts }}
   - host: {{ tpl $key $ }}
@@ -24,4 +31,19 @@ spec:
               name: {{ $.Release.Name }}-proxy
               port:
                 name: http
+  {{- end }}
+  {{- range $index, $value := $.Values.teamcity.nodes }}
+  {{- with $value.ingress }}
+  {{- if .host }}
+  - host: {{ tpl .host $ }}
+    http:
+      paths:
+        - pathType: ImplementationSpecific
+          backend:
+            service:
+              name: {{ $.Release.Name }}-direct-{{ $index }}
+              port:
+                name: http
+  {{- end }}
+  {{- end }}
   {{- end }}

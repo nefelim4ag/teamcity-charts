@@ -82,8 +82,12 @@ teamcity:
           app: "{{ $.Release.Name }}"
   ## @param teamcity.nodes[<index>] override per <index> of sts node
   nodes:
-  - env:
+  ## @param teamcity.nodes[<index>].ingress.host passed to ingress/tls if not empty
+  - ingress:
+      host: teamcity-main.example.com # ~ # teamcity-main.example.com
+    env:
       NODE_ID: MAIN_SERVER # Used to generate Nginx configuration
+      ## @param teamcity.nodes[<index>].env.ROOT_URL passed to teamcity args
       ROOT_URL: https://teamcity-main.example.com
   - env:
       NODE_ID: teamcity-secondary
