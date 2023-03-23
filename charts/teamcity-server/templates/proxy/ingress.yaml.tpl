@@ -6,6 +6,7 @@ metadata:
   annotations:
 {{ $.Values.proxy.ingress.annotations | toYaml | indent 4 }}
 spec:
+  ingressClassName: {{ $.Values.proxy.ingress.ingressClassName }}
   tls:
   - secretName: "{{ $.Release.Name}}-proxy-tls"
     hosts:

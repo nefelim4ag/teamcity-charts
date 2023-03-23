@@ -15,18 +15,14 @@ proxy:
     requests:
       cpu: "10m"
       memory: "12Mi"
-  startupProbe: ~
-  ## Free Nginx does not update DNS endpoints
-  ## Proxy must be rewritten to envoy in the future
-  ## Fix that by reload duct tape
-  livenessProbe:
-    exec:
-      command:
-        - /usr/sbin/nginx
-        - -s
-        - reload
-    initialDelaySeconds: 60
-    periodSeconds: 60
+  startupProbe:
+    httpGet:
+      path: /login.html
+      port: http
+      scheme: HTTP
+    failureThreshold: 120
+    periodSeconds: 5
+  livenessProbe: ~
   ingress:
     hosts:
       - teamcity.example.com

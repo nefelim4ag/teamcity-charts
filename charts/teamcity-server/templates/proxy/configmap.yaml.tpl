@@ -5,24 +5,26 @@ metadata:
   name: {{ $.Release.Name }}-nginx-conf
 data:
   default.conf: |
-    {{- range $key_out, $value_out := $.Values.teamcity.nodes }}
+    {{- range $_, $value_out := $.Values.teamcity.nodes }}
     upstream {{ $value_out.env.NODE_ID }} {
-      {{- range $key_in, $value_in := $.Values.teamcity.nodes }}
+      {{- range $index, $value_in := $.Values.teamcity.nodes }}
+        server {{ $.Release.Name }}-direct-{{ $index }}:8111
       {{- if eq $value_out.env.NODE_ID $value_in.env.NODE_ID }}
-      server {{ $.Release.Name }}-{{ $key_in }}.{{ $.Release.Name }}-headless:8111 max_fails=1;
+          max_fails=1;
       {{- else }}
-      server {{ $.Release.Name }}-{{ $key_in }}.{{ $.Release.Name }}-headless:8111 backup;
+          backup;
       {{- end }}
       {{- end }}
     }
     {{- end }}
 
     upstream web_requests {
-      {{- range $key, $value := $.Values.teamcity.nodes }}
+      {{- range $index, $value := $.Values.teamcity.nodes }}
+      server {{ $.Release.Name }}-direct-{{ $index }}:8111
       {{- if eq $value.env.NODE_ID $.Values.proxy.main_node_id }}
-      server {{ $.Release.Name }}-{{ $key }}.{{ $.Release.Name }}-headless:8111 max_fails=1;
+        max_fails=1;
       {{- else }}
-      server {{ $.Release.Name }}-{{ $key }}.{{ $.Release.Name }}-headless:8111 backup;
+        backup;
       {{- end }}
       {{- end }}
     }
@@ -64,9 +66,6 @@ data:
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy "type=nginx; version={{ $.Chart.AppVersion }}";
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        # Use value from Ingress Nginx
-        # proxy_set_header X-Forwarded-Proto $scheme;
-        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
@@ -80,9 +79,6 @@ data:
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy "type=nginx; version={{ $.Chart.AppVersion }}";
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        # Use value from Ingress Nginx
-        # proxy_set_header X-Forwarded-Proto $scheme;
-        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
