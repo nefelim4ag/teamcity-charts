@@ -149,6 +149,25 @@ ephemeral:
     resources:
       requests:
         storage: 16Gi
+  # BuildAgent cache
+  webapps/ROOT/update:
+    enabled: false
+    annotations: {}
+    storageClassName: efs
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 16Gi
+  webapps/ROOT/WEB-INF/plugins/.unpacked:
+    enabled: true
+    annotations: {}
+    storageClassName: efs
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 16Gi
 
 database:
   host: "127.0.0.1"
