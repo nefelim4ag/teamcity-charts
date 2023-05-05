@@ -58,7 +58,7 @@ spec:
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
         - mountPath: /opt/teamcity/{{ $volume }}
-          name: {{ $volume }}
+          name: {{ $volume | lower | replace "/" "-" | trimSuffix "-" }}
 {{- end }}
 {{- end }}
         - mountPath: /home/tcuser
@@ -86,7 +86,7 @@ spec:
 {{- range $volume, $v_values := . }}
 {{- if not $v_values.enabled }}
       - emptyDir: {}
-        name: {{ $volume }}
+        name: {{ $volume | lower | replace "/" "-" | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -111,7 +111,7 @@ spec:
 {{- range $volume, $v_values := . }}
 {{- if $v_values.enabled }}
   - metadata:
-      name: {{ $volume }}
+      name: {{ $volume | lower | replace "/" "-" | trimSuffix "-" }}
       annotations: {{ $v_values.annotations | toJson }}
     spec:
       storageClassName: {{ $v_values.storageClassName }}
