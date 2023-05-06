@@ -41,7 +41,7 @@ spec:
         - pathType: ImplementationSpecific
           backend:
             service:
-              name: {{ $.Release.Name }}-direct-{{ $index }}
+              name: {{ $.Release.Name }}-direct-h{{ $index }}
               port:
                 name: http
   {{- end }}

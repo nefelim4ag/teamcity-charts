@@ -50,4 +50,24 @@ spec:
     component: server
     statefulset.kubernetes.io/pod-name: {{ $.Release.Name }}-{{ $index }}
   type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-direct-h{{ $index }}
+  annotations:
+    node-id: {{ $value.env.NODE_ID }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8111
+      targetPort: http
+  selector:
+    app: {{ $.Release.Name }}
+    component: server
+    statefulset.kubernetes.io/pod-name: {{ $.Release.Name }}-{{ $index }}
+  type: ClusterIP
 {{- end }}
