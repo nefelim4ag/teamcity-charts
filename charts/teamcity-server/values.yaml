@@ -52,13 +52,21 @@ teamcity:
       valueFrom:
         fieldRef:
           fieldPath: metadata.name
-  startupProbe:
+  startupProbe: ~
+  livenessProbe:
     httpGet:
-      path: /login.html
+      path: /healthCheck/healthy
       port: http
       scheme: HTTP
-    failureThreshold: 120
-    periodSeconds: 5
+    failureThreshold: 3
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /healthCheck/ready
+      port: http
+      scheme: HTTP
+    failureThreshold: 2
+    periodSeconds: 10
   ports:
   - containerPort: 8111
     name: http

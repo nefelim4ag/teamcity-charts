@@ -37,6 +37,8 @@ spec:
         {{- end }}
         {{- end }}
         startupProbe: {{ $.Values.teamcity.startupProbe | toJson }}
+        livenessProbe: {{ $.Values.teamcity.livenessProbe | toJson }}
+        readinessProbe: {{ $.Values.teamcity.readinessProbe | toJson }}
         ports: {{ $.Values.teamcity.ports | toJson}}
         resources: {{ $.Values.teamcity.resources | toJson }}
         volumeMounts:
