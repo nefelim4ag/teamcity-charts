@@ -52,9 +52,10 @@ data:
       listen 80;
 
       set_real_ip_from 0.0.0.0/0;
+      real_ip_header   X-Forwarded-For;
 
-     set $proxy_header_host $host;
-     set $proxy_descr "type=nginx; version={{ $.Chart.AppVersion }}";
+      set $proxy_header_host $host;
+      set $proxy_descr "type=nginx; version={{ $.Chart.AppVersion }}";
 
       location / {
         try_files /dev/null $is_agent;
@@ -69,8 +70,9 @@ data:
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy $proxy_descr;
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-For $remote_addr;
+        # Set by upstream Ingress
+        # proxy_set_header X-Forwarded-Proto $scheme;
+        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
@@ -84,8 +86,8 @@ data:
         proxy_redirect off;
         proxy_set_header X-TeamCity-Proxy $proxy_descr;
         proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-For $remote_addr;
+        # proxy_set_header X-Forwarded-Proto $scheme;
+        # proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade; # WebSocket support
         proxy_set_header Connection $connection_upgrade; # WebSocket support
       }
