@@ -92,7 +92,7 @@ teamcity:
   nodes:
   ## @param teamcity.nodes[<index>].ingress.host passed to ingress/tls if not empty
   - ingress:
-      host: teamcity-main.example.com # ~ # teamcity-main.example.com
+      host: teamcity-main.example.com
     env:
       NODE_ID: MAIN_SERVER # Used to generate Nginx configuration
       ## @param teamcity.nodes[<index>].env.ROOT_URL passed to teamcity args
@@ -182,29 +182,5 @@ configMap:
       connectionProperties.user={{ $.Values.database.user }}
       connectionProperties.password={{ $.Values.database.password }}
       maxConnections=50
-  optConf:
-    server.xml: |-
-      <?xml version="1.0" encoding="UTF-8"?>
-      <Server port="8105" shutdown="SHUTDOWN">
-        <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
-        <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
-        <!-- Prevent memory leaks due to use of particular java/javax APIs-->
-        <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
-        <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
-        <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
-        <GlobalNamingResources>
-          <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database that can be updated and saved" factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml" />
-        </GlobalNamingResources>
-        <Service name="Catalina">
-          <Connector port="8111" protocol="org.apache.coyote.http11.Http11NioProtocol" connectionTimeout="60000" redirectPort="8543" useBodyEncodingForURI="true" tcpNoDelay="1" />
-          <Engine name="Catalina" defaultHost="localhost">
-            <Realm className="org.apache.catalina.realm.LockOutRealm">
-              <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase" />
-            </Realm>
-            <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
-              <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false" />
-              <Valve className="org.apache.catalina.valves.RemoteIpValve" remoteIpHeader="x-forwarded-for" protocolHeader="x-forwarded-proto" portHeader="x-forwarded-port" />
-            </Host>
-          </Engine>
-        </Service>
-      </Server>
+  optConf: ~
+    # server.xml: |-
