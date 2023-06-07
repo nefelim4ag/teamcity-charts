@@ -32,13 +32,6 @@ spec:
               name: {{ $.Release.Name }}
               port:
                 name: http
-        - path: /res
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: {{ $.Release.Name }}
-              port:
-                name: http
         - path: /js
           pathType: ImplementationSpecific
           backend:
