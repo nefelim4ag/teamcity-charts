@@ -95,7 +95,6 @@ spec:
       - emptyDir: {}
         name: home-tcuser
       imagePullSecrets: {{ $.Values.image.imagePullSecrets | toJson }}
-      affinity: {{ $.Values.teamcity.affinity | toJson }}
       {{- with $.Values.teamcity.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- tpl (toYaml .) $ | nindent 8 }}

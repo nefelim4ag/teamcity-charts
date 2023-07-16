@@ -47,3 +47,15 @@ spec:
           defaultMode: 420
           optional: false
       imagePullSecrets: {{ $.Values.proxy.image.imagePullSecrets | toJson }}
+      {{- with $.Values.proxy.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.proxy.affinity }}
+      affinity:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.proxy.tolerations }}
+      tolerations:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}

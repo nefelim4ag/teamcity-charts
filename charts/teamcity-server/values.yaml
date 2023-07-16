@@ -38,6 +38,24 @@ proxy:
       # nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
   main_node_id: MAIN_SERVER # Must match with below for default route
 
+  affinity: {}
+  tolerations:
+    - key: "{{ $.Release.Name }}-proxy"
+      operator: Exists
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: "{{ $.Release.Name }}-proxy"
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: "{{ $.Release.Name }}-proxy"
+
 ## Teamcity deployed by StateFulSet
 ## @param teamcity.resources default value for all nodes in sts
 teamcity:
