@@ -1,3 +1,4 @@
+{{ if $.Values.configMap.datadirConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -5,6 +6,7 @@ metadata:
   name: {{ $.Release.Name }}-datadir-config
 data:
 {{ tpl ($.Values.configMap.datadirConfig | toYaml) $ | indent 4 }}
+{{ end }}
 
 {{ if $.Values.configMap.optConf }}
 ---
@@ -14,6 +16,16 @@ metadata:
   name: {{ $.Release.Name }}-opt-conf
 data:
 {{ tpl ($.Values.configMap.optConf | toYaml) $ | indent 4 }}
+{{ end }}
+
+{{ if $.Values.configMap.services }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Release.Name }}-services
+data:
+{{ tpl ($.Values.configMap.services | toYaml) $ | indent 4 }}
 {{ end }}
 
 ---

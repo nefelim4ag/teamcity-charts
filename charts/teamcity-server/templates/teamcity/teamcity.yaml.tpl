@@ -30,7 +30,8 @@ spec:
         {{- range $key, $value := . }}
         - name: {{ $key }}
         {{- if kindIs "string" $value }}
-          value: {{ tpl ($value) $ }}
+        {{- $v := dict "value" (tpl $value $) }}
+        {{- toYaml $v | nindent 10 }}
         {{- else }}
           {{- tpl (toYaml $value) $ | nindent 10 }}
         {{- end }}
@@ -44,20 +45,29 @@ spec:
         volumeMounts:
         - mountPath: /data/teamcity_server/datadir
           name: teamcity-server-data
+        {{ if $.Values.configMap.datadirConfig }}
         {{- range $key, $value := $.Values.configMap.datadirConfig }}
-        - name: {{ $.Release.Name }}-datadir-config
+        - name: datadir-config
           mountPath: /data/teamcity_server/datadir/config/{{ $key }}
           subPath: {{ $key }}
         {{- end }}
-        {{- if $.Values.configMap.optConf }}
+        {{- end }}
+        {{ if $.Values.configMap.optConf }}
         {{- range $key, $value := $.Values.configMap.optConf }}
         - mountPath: /opt/teamcity/conf/{{ $key }}
-          name: {{ $.Release.Name }}-opt-conf
+          name: opt-conf
+          subPath: {{ $key }}
+        {{- end }}
+        {{- end }}
+        {{ if $.Values.configMap.services }}
+        {{- range $key, $value := $.Values.configMap.services }}
+        - mountPath: /services/{{ $key }}
+          name: services
           subPath: {{ $key }}
         {{- end }}
         {{- end }}
         - mountPath: /run-services-wrp.sh
-          name: {{ $.Release.Name }}-startup-wrp
+          name: startup-wrp
           subPath: run-services-wrp.sh
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
@@ -68,19 +78,25 @@ spec:
         - mountPath: /home/tcuser
           name: home-tcuser
       volumes:
-      {{- if $.Values.configMap.optConf }}
-      - name: {{ $.Release.Name }}-opt-conf
-        configMap:
-          defaultMode: 0644
-          name: {{ $.Release.Name }}-opt-conf
-          optional: false
-      {{- end }}
-      - name: {{ $.Release.Name }}-datadir-config
+      {{ if $.Values.configMap.datadirConfig }}
+      - name: datadir-config
         configMap:
           defaultMode: 0644
           name: {{ $.Release.Name }}-datadir-config
-          optional: false
-      - name: {{ $.Release.Name }}-startup-wrp
+      {{ end }}
+      {{ if $.Values.configMap.optConf }}
+      - name: opt-conf
+        configMap:
+          defaultMode: 0644
+          name: {{ $.Release.Name }}-opt-conf
+      {{ end }}
+      {{ if $.Values.configMap.services }}
+      - name: services
+        configMap:
+          defaultMode: 0755
+          name: {{ $.Release.Name }}-services
+      {{ end }}
+      - name: startup-wrp
         configMap:
           defaultMode: 0755
           name: {{ $.Release.Name }}-startup-wrp

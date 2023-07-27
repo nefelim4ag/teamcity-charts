@@ -175,30 +175,19 @@ database:
 
 configMap:
   datadirConfig:
-    database.mysql.properties: |
-      connectionUrl=jdbc\:mysql\://{{ $.Values.database.host }}/{{ $.Values.database.name}}?allowPublicKeyRetrieval=true&useSSL=false
-      connectionProperties.user={{ $.Values.database.user }}
-      connectionProperties.password={{ $.Values.database.password }}
-
-      # This option, when set to "true",
-      # allows reducing memory usage on large query results.
-      # Should only be used if the jdbc driver version is higher than 5.0.6.
-      # connectionProperties.useCursorFetch=true
-
-      # The maximum number of connections TeamCity can open on a database server.
-      maxConnections=50
-
-      # Specifies whether TeamCity should check each jdbc connection before use.
-      # It reduces the system performance but avoids cases when the system uses
-      # a connection that was closed by the database server due to a time-out or this
-      # connection was broken during the previous operation.
-      innodb_buffer_pool_size=2000M
-      innodb_log_file_size=1024M
-      innodb_flush_log_at_trx_commit=2
     database.properties: |
-      connectionUrl=jdbc\:mysql\://{{ $.Values.database.host }}/{{ .Values.database.name}}?allowPublicKeyRetrieval=true&useSSL=false
+      connectionUrl=jdbc:mysql://{{ $.Values.database.host }}/{{ .Values.database.name}}?allowPublicKeyRetrieval=true&useSSL=false
       connectionProperties.user={{ $.Values.database.user }}
       connectionProperties.password={{ $.Values.database.password }}
       maxConnections=50
   optConf: ~
     # server.xml: |-
+  services:
+    fastunzip.sh: |
+      #!/bin/bash
+      cd /opt/teamcity/webapps/ROOT/WEB-INF/plugins
+      for zip in ./*.zip; do
+        test -f $zip || continue
+        unzip $zip -d $(basename $zip .zip) > /dev/null && rm -f $zip &
+      done
+      wait
