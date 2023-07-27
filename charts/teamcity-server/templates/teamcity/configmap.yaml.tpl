@@ -6,6 +6,7 @@ metadata:
 data:
 {{ tpl ($.Values.configMap.datadirConfig | toYaml) $ | indent 4 }}
 
+{{ if $.Values.configMap.optConf }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -13,6 +14,7 @@ metadata:
   name: {{ $.Release.Name }}-opt-conf
 data:
 {{ tpl ($.Values.configMap.optConf | toYaml) $ | indent 4 }}
+{{ end }}
 
 ---
 apiVersion: v1

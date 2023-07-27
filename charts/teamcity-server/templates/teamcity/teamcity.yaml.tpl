@@ -49,10 +49,12 @@ spec:
           mountPath: /data/teamcity_server/datadir/config/{{ $key }}
           subPath: {{ $key }}
         {{- end }}
+        {{- if $.Values.configMap.optConf }}
         {{- range $key, $value := $.Values.configMap.optConf }}
         - mountPath: /opt/teamcity/conf/{{ $key }}
           name: {{ $.Release.Name }}-opt-conf
           subPath: {{ $key }}
+        {{- end }}
         {{- end }}
         - mountPath: /run-services-wrp.sh
           name: {{ $.Release.Name }}-startup-wrp
@@ -66,11 +68,13 @@ spec:
         - mountPath: /home/tcuser
           name: home-tcuser
       volumes:
+      {{- if $.Values.configMap.optConf }}
       - name: {{ $.Release.Name }}-opt-conf
         configMap:
           defaultMode: 0644
           name: {{ $.Release.Name }}-opt-conf
           optional: false
+      {{- end }}
       - name: {{ $.Release.Name }}-datadir-config
         configMap:
           defaultMode: 0644
