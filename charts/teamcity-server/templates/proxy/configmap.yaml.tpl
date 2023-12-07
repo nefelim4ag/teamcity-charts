@@ -2,93 +2,104 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ $.Release.Name }}-nginx-conf
+  name: {{ $.Release.Name }}-haproxy-cfg
 data:
-  default.conf: |
-    {{- range $_, $value_out := $.Values.teamcity.nodes }}
-    upstream {{ $value_out.env.NODE_ID }} {
-      {{- range $index, $value_in := $.Values.teamcity.nodes }}
-        server {{ $.Release.Name }}-direct-{{ $index }}:8111
-      {{- if eq $value_out.env.NODE_ID $value_in.env.NODE_ID }}
-          max_fails=1;
-      {{- else }}
-          backup;
-      {{- end }}
-      {{- end }}
-    }
-    {{- end }}
+  haproxy.cfg: |
+    defaults
+        mode http
+        timeout connect 240s
+        timeout client 1200s
+        timeout server 1200s
 
-    upstream web_requests {
-      {{- range $index, $value := $.Values.teamcity.nodes }}
-      server {{ $.Release.Name }}-direct-{{ $index }}:8111
-      {{- if eq $value.env.NODE_ID $.Values.proxy.main_node_id }}
-        max_fails=1;
-      {{- else }}
-        backup;
-      {{- end }}
-      {{- end }}
-    }
+    frontend stats-in
+        bind *:8080
 
-    map $http_cookie $backend_cookie {
-        default "{{ $.Values.proxy.main_node_id }}";
-        "~*X-TeamCity-Node-Id-Cookie=(?<node_name>[^;]+)" $node_name;
-    }
+        stats enable
+        stats uri /
 
-    map $http_user_agent $is_agent {
-        default @users;
-        "~*TeamCity Agent*" @agents;
-    }
+    frontend http-in
+        bind *:80
 
-    map $http_upgrade $connection_upgrade { # WebSocket support
-      default upgrade;
-      '' '';
-    }
+        default_backend web_endpoint
+        option httplog
+        log stdout local0  info
 
-    proxy_read_timeout     1200;
-    proxy_connect_timeout  240;
-    client_max_body_size   0;    # maximum size of an HTTP request. 0 allows uploading large artifacts to TeamCity
+        option http-buffer-request
+        declare capture request len 40000000
+        http-request capture req.body id 0
+        capture request header user-agent len 150
+        capture request header Host len 15
 
-    server {
-      listen 80;
+        capture cookie X-TeamCity-Node-Id-Cookie= len 100
 
-      set_real_ip_from 0.0.0.0/0;
-      real_ip_header   X-Forwarded-For;
+        http-request add-header X-TeamCity-Proxy "type=haproxy; version={{ $.Chart.AppVersion }}"
+        http-request set-header X-Forwarded-Host %[req.hdr(Host)]
 
-      set $proxy_header_host $host;
-      set $proxy_descr "type=nginx; version={{ $.Chart.AppVersion }}";
+        acl node_id_cookie_found req.cook(X-TeamCity-Node-Id-Cookie) -m found
+        acl browser req.hdr(User-Agent) -m sub Mozilla
 
-      location / {
-        try_files /dev/null $is_agent;
-      }
+        default_backend clients_not_supporting_cookies
+        use_backend clients_with_node_id_cookie if node_id_cookie_found
+        use_backend clients_supporting_cookies if browser
 
-      location @agents {
-        proxy_pass http://$backend_cookie;
-        proxy_next_upstream error timeout http_503 non_idempotent;
-        proxy_intercept_errors on;
-        proxy_pass_request_body on;
-        proxy_set_header Host $host:$server_port;
-        proxy_redirect off;
-        proxy_set_header X-TeamCity-Proxy $proxy_descr;
-        proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        # Set by upstream Ingress
-        # proxy_set_header X-Forwarded-Proto $scheme;
-        # proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header Upgrade $http_upgrade; # WebSocket support
-        proxy_set_header Connection $connection_upgrade; # WebSocket support
-      }
+    backend clients_with_node_id_cookie
+        # this backend handles the clients that provided the "X-TeamCity-Node-Id-Cookie" cookie
+        # clients that do so are TeamCity agents and browsers handling HTTP requests asking to switch to a specific node
+        cookie X-TeamCity-Node-Id-Cookie
 
-      location @users {
-        proxy_pass http://web_requests;
-        proxy_next_upstream error timeout http_503 non_idempotent;
-        proxy_intercept_errors on;
-        proxy_pass_request_body on;
-        proxy_set_header Host $host:$server_port;
-        proxy_redirect off;
-        proxy_set_header X-TeamCity-Proxy $proxy_descr;
-        proxy_set_header X-Forwarded-Host $http_host; # necessary for proper absolute redirects and TeamCity CSRF check
-        # proxy_set_header X-Forwarded-Proto $scheme;
-        # proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header Upgrade $http_upgrade; # WebSocket support
-        proxy_set_header Connection $connection_upgrade; # WebSocket support
-      }
-    }
+        http-request disable-l7-retry if METH_POST METH_PUT METH_DELETE
+        retry-on empty-response conn-failure response-timeout 502 503 504
+        retries 5
+
+        option httpchk GET /healthCheck/ready
+
+        default-server check fall 6 inter 10000 downinter 5000
+
+        {{- range $index, $value := $.Values.teamcity.nodes }}
+        {{- if and ($value.env) ($value.env.NODE_ID) }}
+        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111 cookie {{ $value.env.NODE_ID }}
+        {{- else }}
+        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111 cookie {{ $.Release.Name }}-{{ $index }}
+        {{- end }}
+        {{- end }}
+
+    backend clients_supporting_cookies
+        # this backend is for the browsers without "X-TeamCity-Node-Id-Cookie"
+        # these requests will be served in a round-robin manner to a healthy server
+        balance roundrobin
+        option redispatch
+        cookie TCSESSIONID prefix nocache
+
+        http-request disable-l7-retry if METH_POST METH_PUT METH_DELETE
+
+        option httpchk
+
+        http-check connect
+        http-check send meth GET uri /healthCheck/preferredNodeStatus
+        http-check expect status 200
+
+        default-server check fall 6 inter 10000 downinter 5000 on-marked-down shutdown-sessions
+
+        {{- range $index, $value := $.Values.teamcity.nodes }}
+        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111 cookie n1 weight 50
+        {{- end }}
+
+    backend clients_not_supporting_cookies
+        # for compatibiity reasons requests from non browser clients are always
+        # routed to a single node (the first healthy)
+        balance first
+        option redispatch
+
+        http-request disable-l7-retry if METH_POST METH_PUT METH_DELETE
+
+        option httpchk
+
+        http-check connect
+        http-check send meth GET uri /healthCheck/preferredNodeStatus
+        http-check expect status 200
+
+        default-server check fall 6 inter 10000 downinter 5000 on-marked-down shutdown-sessions
+
+        {{- range $index, $value := $.Values.teamcity.nodes }}
+        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111
+        {{- end }}

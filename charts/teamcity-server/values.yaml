@@ -7,8 +7,8 @@ image:
 proxy:
   replicas: 2
   image:
-    repository: nginx
-    tag: stable
+    repository: haproxy
+    tag: "2.8"
     pullPolicy: IfNotPresent
     imagePullSecrets: []
   resources:
@@ -36,7 +36,6 @@ proxy:
       # nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
       # nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
       # nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
-  main_node_id: MAIN_SERVER # Must match with below for default route
 
   affinity: {}
   tolerations:

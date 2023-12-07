@@ -38,7 +38,11 @@ kind: Service
 metadata:
   name: {{ $.Release.Name }}-direct-{{ $index }}
   annotations:
-    node-id: {{ $value.env.NODE_ID }}
+    {{- if and ($value.env) ($value.env.NODE_ID) }}
+    node-id: "{{ $value.env.NODE_ID }}"
+    {{- else }}
+    node-id: "{{ $.Release.Name }}-{{ $index }}"
+    {{- end }}
 spec:
   ports:
     - name: http
@@ -56,7 +60,11 @@ kind: Service
 metadata:
   name: {{ $.Release.Name }}-direct-h{{ $index }}
   annotations:
-    node-id: {{ $value.env.NODE_ID }}
+    {{- if and ($value.env) ($value.env.NODE_ID) }}
+    node-id: "{{ $value.env.NODE_ID }}"
+    {{- else }}
+    node-id: "{{ $.Release.Name }}-{{ $index }}"
+    {{- end }}
 spec:
   clusterIP: None
   publishNotReadyAddresses: true

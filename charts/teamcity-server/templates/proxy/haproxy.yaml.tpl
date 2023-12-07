@@ -12,15 +12,13 @@ spec:
   template:
     metadata:
       annotations:
-    {{- range $key, $value := $.Values.teamcity.nodes }}
-        {{ $.Release.Name }}-{{ $key }}: {{ $value.env.NODE_ID }}
-    {{- end }}
+        config-sha: {{ include (print $.Template.BasePath "/proxy/configmap.yaml.tpl") . | sha1sum }}
       labels:
         app: {{ $.Release.Name }}-proxy
         component: proxy
     spec:
       containers:
-      - name: nginx
+      - name: haproxy
         image: {{ $.Values.proxy.image.repository }}:{{ $.Values.proxy.image.tag }}
         imagePullPolicy: {{ $.Values.proxy.image.pullPolicy }}
         lifecycle:
@@ -29,23 +27,28 @@ spec:
               command:
                 - sh
                 - -c
-                - sleep 10; exec /usr/sbin/nginx -s quit
+                - sleep 10; kill -s SIGUSR1 1
         startupProbe: {{ $.Values.proxy.startupProbe | toJson }}
         livenessProbe: {{ $.Values.proxy.livenessProbe | toJson }}
         ports:
         - name: http
           containerPort: 80
+        - name: stats
+          containerPort: 8080
         resources: {{ $.Values.proxy.resources | toJson }}
         volumeMounts:
-          - name: nginx-config
-            mountPath: /etc/nginx/conf.d/default.conf
-            subPath: default.conf
+          - name: haproxy-config
+            mountPath: /usr/local/etc/haproxy
       volumes:
-      - name: nginx-config
+      - name: haproxy-config
         configMap:
-          name: {{ $.Release.Name }}-nginx-conf
+          name: {{ $.Release.Name }}-haproxy-cfg
           defaultMode: 420
           optional: false
+      securityContext:
+        sysctls:
+        - name: net.ipv4.ip_unprivileged_port_start
+          value: "1"
       imagePullSecrets: {{ $.Values.proxy.image.imagePullSecrets | toJson }}
       {{- with $.Values.proxy.topologySpreadConstraints }}
       topologySpreadConstraints:
