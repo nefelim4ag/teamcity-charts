@@ -6,6 +6,14 @@ helm repo add teamcity-charts https://nefelim4ag.github.io/teamcity-charts/
 helm install teamcity teamcity-charts/teamcity-server
 ```
 
+# Upgrade 2.x.x -> 3.x.x
+
+* Nginx replaced by HAProxy, drop proxy.main_node_id key
+* Set node ID to pod name by default
+* Set per node ROOT_URL to internal service name, as they are supposed to inter-node communication according to official docs
+* Allow configuring responsibilities by the helm
+* Rollout pods on config change
+
 # Upgrade 1.2.x -> 2.x.x
 
 * Migrated to statefulset
