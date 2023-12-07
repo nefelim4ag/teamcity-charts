@@ -15,6 +15,8 @@ spec:
       component: server
   template:
     metadata:
+      annotations:
+        config-sha: {{ include (print $.Template.BasePath "/teamcity/configmap.yaml.tpl") . | sha1sum }}
       labels:
         app: {{ $.Release.Name }}
         component: server

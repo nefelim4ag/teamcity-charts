@@ -110,14 +110,21 @@ teamcity:
   ## @param teamcity.nodes[<index>].ingress.host passed to ingress/tls if not empty
   - ingress:
       host: teamcity-main.example.com
-    env:
-      NODE_ID: MAIN_SERVER # Used to generate Nginx configuration
-      ## @param teamcity.nodes[<index>].env.ROOT_URL passed to teamcity args
-      ROOT_URL: https://teamcity-main.example.com
-  - env:
-      NODE_ID: teamcity-secondary
-      ROOT_URL: https://teamcity-secondary.example.com
-
+    ## @param temacity.nodes[<index>].env used to override env per node
+    # env:
+    #   ROOT_URL: "http://{{ $.Release.Name }}-{{ $index }}.{{ $.Release.Name }}-headless.{{ $.Release.Namespace}}:8111"
+    #   NODE_ID: "{{ $.Release.Name }}-{{ $index }}"
+    responsibilities:
+    - MAIN_NODE
+    - CAN_PROCESS_BUILD_TRIGGERS
+    - CAN_PROCESS_USER_DATA_MODIFICATION_REQUESTS
+    - CAN_CHECK_FOR_CHANGES
+    - CAN_PROCESS_BUILD_MESSAGES
+  - responsibilities:
+    - CAN_PROCESS_BUILD_TRIGGERS
+    - CAN_PROCESS_USER_DATA_MODIFICATION_REQUESTS
+    - CAN_CHECK_FOR_CHANGES
+    - CAN_PROCESS_BUILD_MESSAGES
 
 pdb:
   enabled: true

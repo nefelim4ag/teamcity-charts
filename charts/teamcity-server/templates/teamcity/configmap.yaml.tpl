@@ -53,14 +53,22 @@ data:
     fi
 
     set -x
+    case "$HOSTNAME" in
 {{- range $index, $value := .Values.teamcity.nodes }}
-    if [ "$HOSTNAME" == "{{ $.Release.Name }}-{{ $index }}" ]; then
-{{- with $value.env }}
-{{- range $e, $value := . }}
+    "{{ $.Release.Name }}-{{ $index }}")
+      export ROOT_URL=http://{{ $.Release.Name }}-{{ $index }}.{{ $.Release.Name }}-headless.{{ $.Release.Namespace}}:8111
+      export NODE_ID={{ $.Release.Name }}-{{ $index }}
+      {{- with $value.env }}
+      {{- range $e, $value := . }}
       export {{ $e }}="{{ tpl ($value) $ }}"
-{{- end }}
-{{- end }}
+      {{- end }}
+      {{- end }}
       export TEAMCITY_SERVER_OPTS="-Dteamcity.server.nodeId=${NODE_ID} -Dteamcity.server.rootURL=${ROOT_URL} $TEAMCITY_SERVER_OPTS"
+      {{- if $value.responsibilities }}
+      echo Override server responsibilities
+      export TEAMCITY_SERVER_OPTS="-Dteamcity.server.responsibilities={{ join "," $value.responsibilities }} $TEAMCITY_SERVER_OPTS"
+      {{- end }}
       exec /run-services.sh
-    fi
+    ;;
 {{- end }}
+    esac
