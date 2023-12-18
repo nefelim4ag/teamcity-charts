@@ -21,6 +21,9 @@ spec:
         app: {{ $.Release.Name }}
         component: server
     spec:
+{{- if $.Values.serviceAccount.enabled }}
+      serviceAccountName: {{ $.Release.Name }}
+{{- end }}
       containers:
       - name: {{ $.Release.Name }}
         image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}

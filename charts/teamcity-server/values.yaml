@@ -126,6 +126,12 @@ teamcity:
     - CAN_CHECK_FOR_CHANGES
     - CAN_PROCESS_BUILD_MESSAGES
 
+serviceAccount:
+  enabled: false
+  annotations: {}
+  agentRBAC:
+      enabled: false
+
 pdb:
   enabled: true
   minAvailable: 1
