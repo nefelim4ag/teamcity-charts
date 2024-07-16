@@ -8,13 +8,13 @@ proxy:
   replicas: 2
   image:
     repository: haproxy
-    tag: "2.8"
+    tag: "3.0"
     pullPolicy: IfNotPresent
     imagePullSecrets: []
   resources:
     requests:
       cpu: "10m"
-      memory: "12Mi"
+      memory: "80Mi"
   startupProbe:
     httpGet:
       path: /login.html
@@ -105,6 +105,7 @@ teamcity:
       labelSelector:
         matchLabels:
           app: "{{ $.Release.Name }}"
+  hostAliases: []
   ## @param teamcity.nodes[<index>] override per <index> of sts node
   nodes:
   ## @param teamcity.nodes[<index>].ingress.host passed to ingress/tls if not empty

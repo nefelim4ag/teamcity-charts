@@ -132,6 +132,10 @@ spec:
       tolerations:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
+      {{- with $.Values.teamcity.hostAliases }}
+      hostAliases:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
   volumeClaimTemplates:
 {{- with $.Values.ephemeral }}
 {{- range $volume, $v_values := . }}
