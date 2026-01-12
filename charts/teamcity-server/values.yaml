@@ -1,7 +1,7 @@
 image:
   repository: jetbrains/teamcity-server
-  tag: latest
-  pullPolicy: Always
+  tag: 2025.11.1
+  pullPolicy: IfNotPresent
   imagePullSecrets: []
 
 proxy:
