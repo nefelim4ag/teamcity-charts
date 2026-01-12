@@ -157,7 +157,7 @@ ephemeral:
     annotations: {}
     storageClassName: efs
     accessModes:
-      - ReadWriteMany
+      - ReadWriteOnce
     resources:
       requests:
         storage: 16Gi
@@ -166,7 +166,7 @@ ephemeral:
     annotations: {}
     storageClassName: efs
     accessModes:
-      - ReadWriteMany
+      - ReadWriteOnce
     resources:
       requests:
         storage: 16Gi
@@ -175,7 +175,7 @@ ephemeral:
     annotations: {}
     storageClassName: efs
     accessModes:
-      - ReadWriteMany
+      - ReadWriteOnce
     resources:
       requests:
         storage: 16Gi
