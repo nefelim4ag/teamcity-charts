@@ -6,6 +6,11 @@ helm repo add teamcity-charts https://nefelim4ag.github.io/teamcity-charts/
 helm install teamcity teamcity-charts/teamcity-server
 ```
 
+# Upgrade 3.2.x -> 3.3.x
+
+* Now, image version set to a specific TeamCity server version
+* Ephemeral volumes migrated to generic: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes
+
 # Upgrade 2.x.x -> 3.x.x
 
 * Nginx replaced by HAProxy, drop proxy.main_node_id key
