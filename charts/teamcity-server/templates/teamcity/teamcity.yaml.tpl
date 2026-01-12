@@ -21,6 +21,11 @@ spec:
         app: {{ $.Release.Name }}
         component: server
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
 {{- if $.Values.serviceAccount.enabled }}
       serviceAccountName: {{ $.Release.Name }}
 {{- end }}
