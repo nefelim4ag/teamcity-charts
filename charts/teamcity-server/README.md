@@ -10,6 +10,7 @@ helm install teamcity teamcity-charts/teamcity-server
 
 * Now, image version set to a specific TeamCity server version
 * Ephemeral volumes migrated to generic: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes
+* Require StatefulSet migration: `kubectl -n teamcity delete sts teamcity --cascade='orphan'`
 
 # Upgrade 2.x.x -> 3.x.x
 
