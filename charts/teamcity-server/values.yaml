@@ -8,7 +8,7 @@ proxy:
   replicas: 2
   image:
     repository: haproxy
-    tag: "3.0"
+    tag: "3.2"
     pullPolicy: IfNotPresent
     imagePullSecrets: []
   resources:
@@ -154,7 +154,6 @@ pvc:
 ephemeral:
   temp:
     enabled: false
-    annotations: {}
     storageClassName: efs
     accessModes:
       - ReadWriteOnce
@@ -163,22 +162,20 @@ ephemeral:
         storage: 16Gi
   logs:
     enabled: false
-    annotations: {}
     storageClassName: efs
     accessModes:
       - ReadWriteOnce
     resources:
       requests:
         storage: 16Gi
-  cache:
-    enabled: false
-    annotations: {}
-    storageClassName: efs
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 16Gi
+  # cache:
+  #   enabled: false
+  #   storageClassName: efs
+  #   accessModes:
+  #     - ReadWriteOnce
+  #   resources:
+  #     requests:
+  #       storage: 16Gi
 
 database:
   host: "127.0.0.1"
@@ -204,3 +201,10 @@ configMap:
         unzip $zip -d $(basename $zip .zip) > /dev/null && rm -f $zip &
       done
       wait
+    # node-local-hack.sh: |
+    #   #!/bin/bash
+    #   mkdir -p "$TEAMCITY_DATA_PATH/nodes/$HOSTNAME/system/"
+    #   if [ -d $TEAMCITY_DATA_PATH/nodes/$HOSTNAME/system/caches ]; then
+    #     mv -v $TEAMCITY_DATA_PATH/nodes/$HOSTNAME/system/caches $TEAMCITY_DATA_PATH/nodes/$HOSTNAME/system/caches.old
+    #   fi
+    #   ln -svr "$TEAMCITY_DIST/cache/" "$TEAMCITY_DATA_PATH/nodes/$HOSTNAME/system/caches"
