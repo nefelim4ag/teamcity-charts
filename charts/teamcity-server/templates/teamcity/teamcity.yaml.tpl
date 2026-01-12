@@ -114,6 +114,15 @@ spec:
 {{- if not $v_values.enabled }}
       - emptyDir: {}
         name: {{ $volume | lower | replace "." "dot" | replace "/" "-" | trimSuffix "-" }}
+{{- else }}
+      - name: {{ $volume | lower | replace "." "dot" | replace "/" "-" | trimSuffix "-" }}
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: {{ $v_values.accessModes | toJson }}
+              storageClassName: {{ $v_values.storageClassName }}
+              resources: {{ $v_values.resources | toJson }}
+              volumeMode: Filesystem
 {{- end }}
 {{- end }}
 {{- end }}
@@ -136,18 +145,3 @@ spec:
       hostAliases:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-  volumeClaimTemplates:
-{{- with $.Values.ephemeral }}
-{{- range $volume, $v_values := . }}
-{{- if $v_values.enabled }}
-  - metadata:
-      name: {{ $volume | lower | replace "." "dot" | replace "/" "-" | trimSuffix "-" }}
-      annotations: {{ $v_values.annotations | toJson }}
-    spec:
-      storageClassName: {{ $v_values.storageClassName }}
-      accessModes: {{ $v_values.accessModes | toJson }}
-      resources: {{ $v_values.resources | toJson }}
-      volumeMode: Filesystem
-{{- end }}
-{{- end }}
-{{- end }}
