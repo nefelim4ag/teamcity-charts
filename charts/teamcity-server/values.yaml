@@ -1,6 +1,6 @@
 image:
   repository: jetbrains/teamcity-server
-  tag: 2025.11.1
+  tag: 2025.11.2
   pullPolicy: IfNotPresent
   imagePullSecrets: []
 
