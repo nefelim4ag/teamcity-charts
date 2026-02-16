@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   teamcity-server:
   - apiVersion: v2
+    appVersion: 2025.11.2
+    created: "2026-02-16T14:43:15.625339727Z"
+    description: A Helm chart for deploy HA teamcity server
+    digest: de124d2a2925b86b66fc5b6b349c8577efb72dc04dc07622aadf80e2d1ab941d
+    name: teamcity-server
+    type: application
+    urls:
+    - https://github.com/nefelim4ag/teamcity-charts/releases/download/teamcity-server-3.3.4/teamcity-server-3.3.4.tgz
+    version: 3.3.4
+  - apiVersion: v2
     appVersion: 2025.11.1
     created: "2026-01-12T21:34:01.438140675Z"
     description: A Helm chart for deploy HA teamcity server
@@ -261,4 +271,4 @@ entries:
     urls:
     - https://github.com/Nefelim4ag/teamcity-charts/releases/download/teamcity-server-1.1.0/teamcity-server-1.1.0.tgz
     version: 1.1.0
-generated: "2026-01-12T21:34:01.438318127Z"
+generated: "2026-02-16T14:43:15.625541031Z"
