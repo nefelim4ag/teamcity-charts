@@ -81,11 +81,11 @@ data:
         default-server check fall 6 inter 10000 downinter 5000 on-marked-down shutdown-sessions
 
         {{- range $index, $value := $.Values.teamcity.nodes }}
-        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111 cookie n1 weight 50
+        server {{ $.Release.Name }}-{{ $index }} {{ $.Release.Name }}-direct-{{ $index }}:8111 cookie n{{add $index 1}} weight 50
         {{- end }}
 
     backend clients_not_supporting_cookies
-        # for compatibiity reasons requests from non browser clients are always
+        # for compatibility reasons requests from non browser clients are always
         # routed to a single node (the first healthy)
         balance first
         option redispatch
